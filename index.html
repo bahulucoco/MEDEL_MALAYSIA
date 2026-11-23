@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MEDEL</title>
+<meta name="description" content="Malaysia Pharmacy Enforcement Device Log">
+<meta name="theme-color" content="#093E60">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MEDEL">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script src="config.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #FDF8ED; color: #093E60;
+    display: flex; align-items: center; justify-content: center;
+    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+  }
+  .kad { width: 100%; max-width: 400px; text-align: center; }
+  .logo-penuh { width: 100%; max-width: 340px; height: auto; margin-bottom: 26px; }
+  .logo { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  h1 { font-size: 28px; letter-spacing: 3px; margin: 18px 0 4px; }
+  .sub { font-size: 13px; opacity: .85; margin: 0 0 28px; }
+  .btn {
+    display: block; width: 100%; padding: 14px; margin: 10px 0; border: 0; border-radius: 10px;
+    font-size: 16px; font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  .btn-utama { background: #093E60; color: #fff; box-shadow: 0 4px 12px rgba(9,62,96,.25); }
+  .btn-kedua { background: #fff; color: #D21F2D; border: 2px solid #D21F2D; }
+  .nota { background: #fff; border: 1px solid #eadfca; color: #333; border-radius: 10px; padding: 14px; font-size: 14px; text-align: left; line-height: 1.5; margin-top: 18px; }
+  .nota b { color: #093E60; }
+  .spinner { width: 34px; height: 34px; border: 3px solid rgba(9,62,96,.2); border-top-color: #D21F2D; border-radius: 50%; margin: 10px auto; animation: pusing 0.8s linear infinite; }
+  @keyframes pusing { to { transform: rotate(360deg); } }
+  .sembunyi { display: none !important; }
+</style>
+</head>
+<body>
+<div class="kad">
+  <img class="logo-penuh" src="icons/logo-penuh.svg" alt="MEDEL - Malaysia Pharmacy Enforcement Device Log">
+
+  <!-- Sedang membuka (mod aplikasi) -->
+  <div id="paparBuka" class="sembunyi">
+    <div class="spinner"></div>
+    <p style="font-size:14px;opacity:.8">Membuka sistem...</p>
+  </div>
+
+  <!-- Tiada internet -->
+  <div id="paparLuarTalian" class="sembunyi">
+    <div class="nota">Tiada sambungan internet. Sistem MEDEL memerlukan internet untuk memaparkan data terkini.</div>
+    <button class="btn btn-utama" onclick="location.reload()">Cuba Lagi</button>
+  </div>
+
+  <!-- Menu utama (dibuka dalam pelayar) -->
+  <div id="paparMenu" class="sembunyi">
+    <a id="btnBuka" class="btn btn-utama" href="#">Buka Sistem MEDEL</a>
+    <button id="btnPasang" class="btn btn-kedua sembunyi">⬇ Pasang Aplikasi</button>
+    <div id="notaIOS" class="nota sembunyi">
+      <b>Pasang di iPhone / iPad:</b><br>
+      1. Buka halaman ini dalam <b>Safari</b>.<br>
+      2. Tekan butang <b>Kongsi</b> (petak dengan anak panah ke atas).<br>
+      3. Pilih <b>Add to Home Screen</b> / <b>Tambah ke Skrin Utama</b>.
+    </div>
+    <div id="notaAndroid" class="nota sembunyi">
+      <b>Pasang di Android:</b><br>
+      Tekan menu <b>⋮</b> di Chrome, kemudian pilih <b>Install app</b> / <b>Tambah ke skrin utama</b>.
+    </div>
+    <div id="notaSiap" class="nota sembunyi">✅ Aplikasi MEDEL telah dipasang. Buka melalui ikon MEDEL di skrin utama.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var tunjuk = function (id) { ['paparBuka', 'paparLuarTalian', 'paparMenu'].forEach(function (x) { $(x).classList.toggle('sembunyi', x !== id); }); };
+
+  var modApp = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var ua = navigator.userAgent;
+  var iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var android = /Android/i.test(ua);
+
+  $('btnBuka').href = MEDEL_URL;
+
+  // Daftar service worker (untuk pemasangan & paparan luar talian)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('SW:', e); }); });
+  }
+
+  if (!navigator.onLine) { tunjuk('paparLuarTalian'); return; }
+
+  // Dibuka dari ikon skrin utama -> terus ke sistem
+  if (modApp && !sessionStorage.getItem('medel_dibuka')) {
+    tunjuk('paparBuka');
+    sessionStorage.setItem('medel_dibuka', '1');
+    setTimeout(function () { location.replace(MEDEL_URL); }, 400);
+    return;
+  }
+
+  // Dibuka dalam pelayar -> menu + arahan pemasangan
+  tunjuk('paparMenu');
+  if (modApp) return;   // dalam aplikasi tetapi kembali ke halaman ini: cukup butang Buka
+
+  var promptPasang = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault(); promptPasang = e;
+    $('btnPasang').classList.remove('sembunyi');
+    $('notaAndroid').classList.add('sembunyi');
+  });
+  $('btnPasang').addEventListener('click', function () {
+    if (!promptPasang) return;
+    promptPasang.prompt();
+    promptPasang.userChoice.then(function () { promptPasang = null; $('btnPasang').classList.add('sembunyi'); });
+  });
+  window.addEventListener('appinstalled', function () {
+    $('btnPasang').classList.add('sembunyi'); $('notaAndroid').classList.add('sembunyi'); $('notaSiap').classList.remove('sembunyi');
+  });
+
+  if (iOS) $('notaIOS').classList.remove('sembunyi');
+  else if (android) setTimeout(function () { if (!promptPasang) $('notaAndroid').classList.remove('sembunyi'); }, 1500);
+})();
+</script>
+</body>
+</html>
