@@ -9,4 +9,4 @@
 //
 // Hanya kemaskini baris di bawah jika anda membuat "New deployment" (URL baharu).
 // =====================================================================
-var MEDEL_URL = "https://script.google.com/a/macros/moh.gov.my/s/AKfycbzjOx9gLzBz7xnDcM3YXBpoOqWany4WJ1JRWtf9Ht2WeTvlJezNl0Qkqj8qUQc5ptUFqQ/exec";
+var MEDEL_URL = "https://script.google.com/a/macros/moh.gov.my/s/AKfycbwazJu12PHR3bOMG17H-g5IITQnHP1iMjA7rTOxgRelMa-PhFjBBti3hzpHcN6CNyiiyQ/exec";
